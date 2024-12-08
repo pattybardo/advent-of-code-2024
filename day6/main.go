@@ -46,9 +46,11 @@ func guard_walk(filename string) int {
 	obj_map := make(map[Position]struct{})
 
 	for !done {
+		fmt.Println(pos)
 		simulate(pos, dir, arrayOfArrays, adjacency_map, obj_map)
 		step(&pos, &dir, &done, arrayOfArrays, adjacency_map)
 	}
+	fmt.Println("1232342341234")
 
 	for val := range adjacency_map {
 		fmt.Println(val)
@@ -64,7 +66,11 @@ func guard_walk(filename string) int {
 
 func simulate(pos Position, dir Direction, input [][]rune, adjacency_map map[Position]map[Direction]struct{}, obj_map map[Position]struct{}) {
 	obj_pos := Position{pos.X + dir.x_dir, pos.Y + dir.y_dir}
-	if input[obj_pos.Y][obj_pos.X] == '#' {
+	_, visited := adjacency_map[obj_pos]
+	if !within_bounds(obj_pos, dir, input) {
+		return
+	}
+	if input[obj_pos.Y][obj_pos.X] == '#' || visited {
 		return
 	}
 	// Deep Copies
@@ -86,6 +92,10 @@ func simulate(pos Position, dir Direction, input [][]rune, adjacency_map map[Pos
 }
 
 func step(pos *Position, dir *Direction, done *bool, input [][]rune, adjacency_map map[Position]map[Direction]struct{}) bool {
+	*done = !within_bounds(*pos, *dir, input)
+	if *done {
+		return false
+	}
 	changeDirection(input, pos, dir)
 
 	if adjacency_map[*pos] == nil {
@@ -99,7 +109,6 @@ func step(pos *Position, dir *Direction, done *bool, input [][]rune, adjacency_m
 
 	updatePosition(pos, dir)
 
-	*done = !within_bounds(*pos, *dir, input)
 	return is_loop
 }
 
