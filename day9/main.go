@@ -18,15 +18,25 @@ func solve() int {
 	input := readInput()
 
 	// fmt.Println(input)
-	positions, emptySpots := splitInput(input)
-
+	positions := splitInput(input)
+	printPositions(positions, input[0])
 	// fmt.Println(positions)
-	arrangedPositions := moveFileBlocks(positions, emptySpots)
 
-	fmt.Println(arrangedPositions)
-	output := calculateOutput(arrangedPositions)
+	// fmt.Println(arrangedPositions)
+	output := calculateOutput(positions)
 
 	return output
+}
+
+func printPositions(positions []int, start int) {
+	for i := 0; i < len(positions); i++ {
+		if positions[i] == 0 && i >= start {
+			fmt.Print(".")
+		} else {
+			fmt.Print(positions[i])
+		}
+	}
+	fmt.Print("\n")
 }
 
 func calculateOutput(arrangedPositions []int) int {
@@ -37,27 +47,7 @@ func calculateOutput(arrangedPositions []int) int {
 	return counter
 }
 
-func moveFileBlocks(positions []int, emptySpots []int) []int {
-	counter := len(positions) - 1
-	emptyCounter := 0
-	for range emptySpots {
-		if counter <= emptyCounter {
-			break
-		} else if positions[counter] == 0 {
-			counter--
-		} else {
-			positions[emptySpots[emptyCounter]] = positions[counter]
-			positions[counter] = 0
-			counter--
-			emptyCounter++
-		}
-	}
-	return positions
-}
-
-func splitInput(input []int) ([]int, []int) {
-	var emptySpots []int
-
+func splitInput(input []int) []int {
 	counter := 0
 	odd := true
 	for i := range len(input) {
@@ -68,27 +58,47 @@ func splitInput(input []int) ([]int, []int) {
 
 	positions := make([]int, counter)
 
-	counter = 0
-	odd = true
-	id_counter := 0
+	updatedInput := make([]int, len(input))
+	copy(updatedInput, input)
+	leftoverArray := make([]int, len(input))
 
-	for i := range len(input) {
-		if odd {
-			for range input[i] {
-				positions[counter] = id_counter
-				counter++
+	rightSwitcher := true
+
+	for right := len(input) - 1; right >= 0; right-- {
+		counter = 0
+		odd = false
+		has_moved := false
+		if rightSwitcher {
+			for left := range len(input) {
+				if left >= right {
+					break
+				}
+				if odd {
+					if updatedInput[left] >= input[right] {
+						updatedInput[left] -= input[right]
+						for i := range input[right] {
+							positions[counter+leftoverArray[left]+i] = right / 2
+						}
+						if updatedInput[left] > 0 {
+							leftoverArray[left] += input[right]
+						}
+						has_moved = true
+						break
+					}
+				}
+				counter += input[left]
+				odd = !odd
 			}
-			id_counter++
-		} else {
-			for range input[i] {
-				emptySpots = append(emptySpots, counter)
-				counter++
+			if has_moved == false {
+				for i := range input[right] {
+					positions[counter+i] = right / 2
+				}
 			}
 		}
-		odd = !odd
+		rightSwitcher = !rightSwitcher
 	}
 
-	return positions, emptySpots
+	return positions
 }
 
 func readInput() []int {
