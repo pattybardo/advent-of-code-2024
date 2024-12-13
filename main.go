@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 func main() {
-	x := "000100"
+	var y float32 = 4
+	var x float32 = 3
 
-	fmt.Println(strings.TrimLeft(x, "0"))
+	fmt.Println(float32(int(x / y)))
 }
