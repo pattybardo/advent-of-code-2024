@@ -22,11 +22,11 @@ type direction struct {
 }
 
 type gardenNode struct {
-	coordinate     coordinate
-	perimeterCount int
+	coordinate  coordinate
+	cornerCount int
 }
 
-var directions = []direction{{0, -1}, {1, 0}, {0, 1}, {-1, 0}}
+var directions = []direction{{0, -1}, {1, 0}, {0, 1}, {-1, 0}, {0, -1}}
 
 func main() {
 	fmt.Println(solve())
@@ -59,13 +59,24 @@ func solve() int {
 }
 
 func processGarden(input [][]rune, visitedNodes map[coordinate]struct{}, gardenGrouping map[coordinate][]gardenNode, parentCoordinate, nodeCoordinate coordinate, bounds int) {
-	perimeterCounter := 0
+	cornerCounter := 0
 	visitedNodes[nodeCoordinate] = struct{}{}
-	for _, direction := range directions {
-		newCoordinate := coordinate{nodeCoordinate.x + direction.x, nodeCoordinate.y + direction.y}
+	for i := 0; i < len(directions)-1; i++ {
+
+		newDirection := directions[i]
+		newCoordinate := coordinate{nodeCoordinate.x + newDirection.x, nodeCoordinate.y + newDirection.y}
+		nextNewDirection := directions[i+1]
+		nextNewCoordinate := coordinate{nodeCoordinate.x + nextNewDirection.x, nodeCoordinate.y + nextNewDirection.y}
+		// This two if statements together check the outer corner situation
 		if !checkBounds(input, newCoordinate, nodeCoordinate, bounds) {
-			perimeterCounter += 1
+			if !checkBounds(input, nextNewCoordinate, nodeCoordinate, bounds) {
+				cornerCounter += 1
+			}
 			continue
+		}
+		innerCornerCoordinate := coordinate{nodeCoordinate.x + newDirection.x + nextNewDirection.x, nodeCoordinate.y + newDirection.y + nextNewDirection.y}
+		if !checkBounds(input, innerCornerCoordinate, nodeCoordinate, bounds) && checkBounds(input, nextNewCoordinate, nodeCoordinate, bounds) {
+			cornerCounter += 1
 		}
 		_, exists := visitedNodes[newCoordinate]
 		if exists {
@@ -75,9 +86,9 @@ func processGarden(input [][]rune, visitedNodes map[coordinate]struct{}, gardenG
 	}
 	_, exists := gardenGrouping[parentCoordinate]
 	if !exists {
-		gardenGrouping[parentCoordinate] = []gardenNode{{nodeCoordinate, perimeterCounter}}
+		gardenGrouping[parentCoordinate] = []gardenNode{{nodeCoordinate, cornerCounter}}
 	} else {
-		gardenGrouping[parentCoordinate] = append(gardenGrouping[parentCoordinate], gardenNode{nodeCoordinate, perimeterCounter})
+		gardenGrouping[parentCoordinate] = append(gardenGrouping[parentCoordinate], gardenNode{nodeCoordinate, cornerCounter})
 	}
 }
 
@@ -93,21 +104,22 @@ func visualize(coordinateChars [][]rune) {
 
 func visualizeGrouping(coordinateChars [][]rune, gardenGrouping map[coordinate][]gardenNode) {
 	counter := 0
-	for _, valArr := range gardenGrouping {
+	for key, valArr := range gardenGrouping {
 		areaCounter := 0
-		perimeterCounter := 0
-		// fmt.Printf("%c: ", coordinateChars[key.y][key.x])
+		cornerCounter := 0
+		fmt.Printf("%c: ", coordinateChars[key.y][key.x])
 		for _, val := range valArr {
-			// fmt.Print(val, ", ")
+			fmt.Print(val, ", ")
 			areaCounter += 1
-			perimeterCounter += val.perimeterCount
+			cornerCounter += val.cornerCount
 		}
-		counter += areaCounter * perimeterCounter
-		// fmt.Print("\n")
+		counter += areaCounter * cornerCounter
+		fmt.Print("\n")
 	}
 	fmt.Println(counter)
 }
 
+// Return true if out of bounds or that new step isn;t the same as before
 func checkBounds(input [][]rune, newCoordinate, coordinate2 coordinate, bound int) bool {
 	if newCoordinate.x >= 0 && newCoordinate.x < bound && newCoordinate.y >= 0 && newCoordinate.y < bound {
 		if input[newCoordinate.y][newCoordinate.x] != input[coordinate2.y][coordinate2.x] {
